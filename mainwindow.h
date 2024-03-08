@@ -17,7 +17,11 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void on_pushButtonSendQuestion_clicked();
+
 private:
     Ui::MainWindow *ui;
+    void addChatItem();
 };
 #endif // MAINWINDOW_H

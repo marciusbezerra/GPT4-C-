@@ -174,8 +174,30 @@ border-radius: 10px;</string>
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="layoutDirection">
+                  <enum>Qt::LeftToRight</enum>
+                 </property>
+                 <property name="autoFillBackground">
+                  <bool>false</bool>
+                 </property>
                  <property name="text">
                   <string>Perguntar</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="Resources.qrc">
+                   <normaloff>:/new/images/resources/images/send.png</normaloff>:/new/images/resources/images/send.png</iconset>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>48</width>
+                   <height>48</height>
+                  </size>
+                 </property>
+                 <property name="default">
+                  <bool>true</bool>
+                 </property>
+                 <property name="flat">
+                  <bool>false</bool>
                  </property>
                 </widget>
                </item>
@@ -205,6 +227,8 @@ border-radius: 10px;</string>
     <property name="title">
      <string>Arquivo</string>
     </property>
+    <addaction name="actionCriar_API_Key"/>
+    <addaction name="separator"/>
     <addaction name="actionSair"/>
    </widget>
    <widget class="QMenu" name="menuAjuda">
@@ -225,6 +249,11 @@ border-radius: 10px;</string>
   <action name="actionCreditos">
    <property name="text">
     <string>Créditos</string>
+   </property>
+  </action>
+  <action name="actionCriar_API_Key">
+   <property name="text">
+    <string>Criar API Key</string>
    </property>
   </action>
  </widget>

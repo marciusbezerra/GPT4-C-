@@ -1,5 +1,10 @@
 <RCC>
     <qresource prefix="/new/images">
         <file>resources/images/placeholder-300x200.png</file>
+        <file>resources/images/conversation.png</file>
+        <file>resources/images/exit.png</file>
+        <file>resources/images/key.png</file>
+        <file>resources/images/request.png</file>
+        <file>resources/images/send.png</file>
     </qresource>
 </RCC>
