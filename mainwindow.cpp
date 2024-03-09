@@ -156,6 +156,7 @@ void MainWindow::on_networkRequestFinished(QNetworkReply *reply)
 
 void MainWindow::addQuestionAnswerWidget(QString question, QString answer) {
     ChatItem *item = new ChatItem(this);
+    item->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     auto *witem = new QListWidgetItem();
     witem->setSizeHint(item->sizeHint());
     // witem->setSizeHint(QSize(891, 500));
