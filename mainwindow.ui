@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>GPT4 - Turbo (MCBMax.com)</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -42,8 +42,17 @@
              </item>
              <item>
               <widget class="QLineEdit" name="lineEditApiKey">
+               <property name="text">
+                <string>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</string>
+               </property>
+               <property name="maxLength">
+                <number>200</number>
+               </property>
+               <property name="echoMode">
+                <enum>QLineEdit::Password</enum>
+               </property>
                <property name="readOnly">
-                <bool>true</bool>
+                <bool>false</bool>
                </property>
               </widget>
              </item>
@@ -76,7 +85,11 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
-            <widget class="QListView" name="listViewChats"/>
+            <widget class="QTreeView" name="treeViewChats">
+             <property name="headerHidden">
+              <bool>true</bool>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -117,7 +130,13 @@
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout">
                <item>
-                <widget class="QTextEdit" name="textEditQuestion"/>
+                <widget class="QTextEdit" name="textEditQuestion">
+                 <property name="markdown">
+                  <string>Estou fazendo uma pergunta de testes
+
+</string>
+                 </property>
+                </widget>
                </item>
                <item>
                 <widget class="QLabel" name="labelImage">
@@ -242,16 +261,28 @@ border-radius: 10px;</string>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionSair">
+   <property name="icon">
+    <iconset resource="Resources.qrc">
+     <normaloff>:/new/images/resources/images/exit.png</normaloff>:/new/images/resources/images/exit.png</iconset>
+   </property>
    <property name="text">
     <string>Sair</string>
    </property>
   </action>
   <action name="actionCreditos">
+   <property name="icon">
+    <iconset resource="Resources.qrc">
+     <normaloff>:/new/images/resources/images/request.png</normaloff>:/new/images/resources/images/request.png</iconset>
+   </property>
    <property name="text">
     <string>Créditos</string>
    </property>
   </action>
   <action name="actionCriar_API_Key">
+   <property name="icon">
+    <iconset resource="Resources.qrc">
+     <normaloff>:/new/images/resources/images/key.png</normaloff>:/new/images/resources/images/key.png</iconset>
+   </property>
    <property name="text">
     <string>Criar API Key</string>
    </property>
