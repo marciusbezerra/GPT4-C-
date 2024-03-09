@@ -1,4 +1,3 @@
-#include "chatitem.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -150,19 +149,8 @@ void MainWindow::on_networkRequestFinished(QNetworkReply *reply)
 
     lastQuestionAnswer->answer = answer;
 
-    addQuestionAnswerWidget(lastQuestionAnswer->question, lastQuestionAnswer->answer);
+    fillChatListWidget();
     saveConversations("conversations.json");
-}
-
-void MainWindow::addQuestionAnswerWidget(QString question, QString answer) {
-    ChatItem *item = new ChatItem(this);
-    item->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-    auto *witem = new QListWidgetItem();
-    witem->setSizeHint(item->sizeHint());
-    // witem->setSizeHint(QSize(891, 500));
-    ui->listWidgetChat->addItem(witem);
-    ui->listWidgetChat->setItemWidget(witem, item);
-    item->setQuestionAnswer(question, answer);
 }
 
 void MainWindow::createTodayConversationIfNotExists() {
@@ -274,10 +262,17 @@ void MainWindow::on_treeViewChats_clicked(const QModelIndex &index)
 
 void MainWindow::fillChatListWidget()
 {
-    ui->listWidgetChat->clear();
+    ui->textBrowserQuestionAnswers->clear();
     if (currentConversation) {
         for (const auto &questionAnswer : currentConversation->questionAnswerList) {
-            addQuestionAnswerWidget(questionAnswer->question, questionAnswer->answer);
+            QString formattedText = QString("<b>Você:</b> %1<br><br><b>GPT:</b> %2<br><hr>")
+                .arg(questionAnswer->question, questionAnswer->answer);
+            ui->textBrowserQuestionAnswers->append(formattedText);
         }
+
+        // ui->textBrowserQuestionAnswers->setMarkdown(ui->textBrowserQuestionAnswers->toPlainText());
+
+        ui->textBrowserQuestionAnswers->moveCursor(QTextCursor::End);
+        ui->textBrowserQuestionAnswers->ensureCursorVisible();
     }
 }

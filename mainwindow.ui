@@ -103,18 +103,9 @@
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_6">
              <item>
-              <widget class="QListWidget" name="listWidgetChat">
-               <property name="sizeAdjustPolicy">
-                <enum>QAbstractScrollArea::AdjustIgnored</enum>
-               </property>
-               <property name="editTriggers">
-                <set>QAbstractItemView::NoEditTriggers</set>
-               </property>
-               <property name="selectionMode">
-                <enum>QAbstractItemView::NoSelection</enum>
-               </property>
-               <property name="verticalScrollMode">
-                <enum>QAbstractItemView::ScrollPerPixel</enum>
+              <widget class="QTextBrowser" name="textBrowserQuestionAnswers">
+               <property name="autoFormatting">
+                <set>QTextEdit::AutoAll</set>
                </property>
               </widget>
              </item>

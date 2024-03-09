@@ -49,7 +49,6 @@ private:
     void loadConversations(const QString &filename);
     void saveConversations(const QString &filename);
     void createTodayConversationIfNotExists();
-    void addQuestionAnswerWidget(QString question, QString answer);
     void fillChatListWidget();
 };
 #endif // MAINWINDOW_H
