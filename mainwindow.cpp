@@ -13,6 +13,7 @@
 #include <QJsonArray>
 #include <QTextDocument>
 #include <QFile>
+#include <QThread>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -81,6 +82,9 @@ void MainWindow::on_pushButtonSendQuestion_clicked()
         return;
     }
 
+    lockUi(true);
+    showProgressDialog("Aguarde, consultado a API OpenAI...");
+
     lastQuestionAnswer = std::make_shared<QuestionAnswer>();
     lastQuestionAnswer->question = question;
     lastQuestionAnswer->answer = "";
@@ -89,44 +93,57 @@ void MainWindow::on_pushButtonSendQuestion_clicked()
     createTodayConversationIfNotExists();
     currentConversation->questionAnswerList.append(lastQuestionAnswer);
 
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    connect(manager, &QNetworkAccessManager::finished, this, &MainWindow::on_networkRequestFinished);
+    // **** SIMULAÇÃO ****
 
-    QNetworkRequest request(QUrl("https://api.openai.com/v1/chat/completions"));
-    // QNetworkRequest request(QUrl("https://webhook.site/a5457910-7a1e-4168-9ceb-b02e8039ca24"));
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    request.setRawHeader("Authorization", QString("Bearer %1").arg(apiKey).toUtf8());
+    QThread::sleep(10);
 
-    QJsonObject body;
-    QJsonArray messagesArray;
+    lastQuestionAnswer->answer = "Resposta da API";
+    fillChatListWidget();
+    saveConversations("conversations.json");
+    hideProgressDialog();
+    lockUi(false);
 
-    for (const auto &questionAnswer : currentConversation->questionAnswerList) {
-        QJsonObject chatObject;
-        chatObject["role"] = "user";
-        chatObject["content"] = questionAnswer->question;
-        if (!questionAnswer->answer.isEmpty()) {
-            chatObject["role"] = "assistant";
-            chatObject["content"] = questionAnswer->answer;
-        }
-        if (!questionAnswer->image.isEmpty()) {
-            chatObject["image"] = questionAnswer->image;
-        }
-        messagesArray.append(chatObject);
-    }
+    // **** SIMULAÇÃO ****
 
-    body["messages"] = messagesArray;
-    //body["model"] = "gpt-4-turbo-preview";
-    body["model"] = "gpt-3.5-turbo";
-    body["temperature"] = 0.5;
-    body["max_tokens"] = 4000;
+    // QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    // connect(manager, &QNetworkAccessManager::finished, this, &MainWindow::on_networkRequestFinished);
 
-    manager->post(request, QJsonDocument(body).toJson());
+    // QNetworkRequest request(QUrl("https://api.openai.com/v1/chat/completions"));
+    // request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    // request.setRawHeader("Authorization", QString("Bearer %1").arg(apiKey).toUtf8());
+
+    // QJsonObject body;
+    // QJsonArray messagesArray;
+
+    // for (const auto &questionAnswer : currentConversation->questionAnswerList) {
+    //     QJsonObject chatObject;
+    //     chatObject["role"] = "user";
+    //     chatObject["content"] = questionAnswer->question;
+    //     if (!questionAnswer->answer.isEmpty()) {
+    //         chatObject["role"] = "assistant";
+    //         chatObject["content"] = questionAnswer->answer;
+    //     }
+    //     if (!questionAnswer->image.isEmpty()) {
+    //         chatObject["image"] = questionAnswer->image;
+    //     }
+    //     messagesArray.append(chatObject);
+    // }
+
+    // body["messages"] = messagesArray;
+    // // body["model"] = "gpt-4-turbo-preview";
+    // body["model"] = "gpt-3.5-turbo";
+    // body["temperature"] = 0.5;
+    // body["max_tokens"] = 4000;
+
+    // manager->post(request, QJsonDocument(body).toJson());
 }
 
 void MainWindow::on_networkRequestFinished(QNetworkReply *reply)
 {
 
     if(reply->error() != QNetworkReply::NoError) {
+        hideProgressDialog();
+        lockUi(false);
         auto error = reply->readAll();
         if (error.startsWith("{")) {
             QJsonDocument docJson = QJsonDocument::fromJson(error);
@@ -143,14 +160,40 @@ void MainWindow::on_networkRequestFinished(QNetworkReply *reply)
     QJsonObject obj = docJson.object();
     QString answer = obj["choices"].toArray().first().toObject()["message"].toObject()["content"].toString();
 
-    // QTextDocument doc;
-    // doc.setMarkdown(answer);
-    // QString html = doc.toHtml();
-
     lastQuestionAnswer->answer = answer;
 
     fillChatListWidget();
     saveConversations("conversations.json");
+
+    hideProgressDialog();
+    lockUi(false);
+}
+
+void MainWindow::showProgressDialog(const QString &text)
+{
+    if (!progressDialog) {
+        progressDialog = new QProgressDialog(text, "Cancelar", 0, 0, this);
+        progressDialog->setWindowModality(Qt::WindowModal);
+    } else {
+        progressDialog->setLabelText(text);
+    }
+    progressDialog->show();
+}
+
+void MainWindow::hideProgressDialog()
+{
+    if (progressDialog) {
+        progressDialog->hide();
+    }
+}
+
+void MainWindow::lockUi(bool lock)
+{
+    ui->lineEditApiKey->setEnabled(!lock);
+    ui->treeViewChats->setEnabled(!lock);
+    ui->groupBoxQuestion->setEnabled(!lock);
+    // ui->textEditQuestion->setEnabled(!lock);
+    // ui->pushButtonSendQuestion->setEnabled(!lock);
 }
 
 void MainWindow::createTodayConversationIfNotExists() {
@@ -173,8 +216,9 @@ void MainWindow::createTodayConversationIfNotExists() {
             currentConversation->title = "Conversa #00001";
             currentConversation->questionAnswerList = QList<std::shared_ptr<QuestionAnswer>>();
             conversations.append(currentConversation);
-            fillConversationTreeView();
         }
+
+        fillConversationTreeView();
     }
 
 }
@@ -262,17 +306,46 @@ void MainWindow::on_treeViewChats_clicked(const QModelIndex &index)
 
 void MainWindow::fillChatListWidget()
 {
-    ui->textBrowserQuestionAnswers->clear();
+    ui->textBrowser->clear();
     if (currentConversation) {
+        QString document = QString("## %1\n\n---\n\n").arg(currentConversation->title);
+        ui->textBrowser->append(document);
         for (const auto &questionAnswer : currentConversation->questionAnswerList) {
-            QString formattedText = QString("<b>Você:</b> %1<br><br><b>GPT:</b> %2<br><hr>")
-                .arg(questionAnswer->question, questionAnswer->answer);
-            ui->textBrowserQuestionAnswers->append(formattedText);
+            document += QString("❓ **Você:** *%1*\n\n").arg(questionAnswer->question);
+            document += QString("💡 **GPT:** %1\n\n---\n\n").arg(questionAnswer->answer);
         }
 
-        // ui->textBrowserQuestionAnswers->setMarkdown(ui->textBrowserQuestionAnswers->toPlainText());
-
-        ui->textBrowserQuestionAnswers->moveCursor(QTextCursor::End);
-        ui->textBrowserQuestionAnswers->ensureCursorVisible();
+        QTextDocument doc;
+        doc.setMarkdown(document);
+        auto x = doc.toHtml(); // sem o <HTML></HTML>
+        qDebug() << x;
+        ui->textBrowser->setHtml(x);
+        ui->textBrowser->moveCursor(QTextCursor::End);
+        ui->textBrowser->ensureCursorVisible();
     }
 }
+
+// void MainWindow::fillChatListWidget()
+// {
+//     ui->textBrowser->clear();
+//     if (currentConversation) {
+//         QString document = QString("<h1>%1</h1>").arg(currentConversation->title);
+//         ui->textBrowser->append(document);
+//         for (const auto &questionAnswer : currentConversation->questionAnswerList) {
+//             QString questionText = QString("<b>Você:</b> <p>%1</p>").arg(questionAnswer->question);
+
+//             QTextDocument doc;
+//             doc.setMarkdown(questionAnswer->answer);
+//             auto x = doc.toHtml();
+//             qDebug() << x;
+
+//             QString answerText = QString("<b>GPT:</b> %1").arg(x); // .replace("\n", "<br>")
+
+//             ui->textBrowser->append(questionText);
+//             ui->textBrowser->append(answerText);
+//         }
+
+//         ui->textBrowser->moveCursor(QTextCursor::End);
+//         ui->textBrowser->ensureCursorVisible();
+//     }
+// }

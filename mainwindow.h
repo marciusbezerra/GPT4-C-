@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QNetworkReply>
+#include <QProgressDialog>
 
 // Defina uma estrutura para representar um chat
 struct QuestionAnswer {
@@ -44,11 +45,15 @@ private:
     std::shared_ptr<QuestionAnswer> lastQuestionAnswer;
     QList<std::shared_ptr<Conversation>> conversations;
     std::shared_ptr<Conversation> currentConversation;
+    QProgressDialog *progressDialog = nullptr;
     void addChatItem();
     void fillConversationTreeView();
     void loadConversations(const QString &filename);
     void saveConversations(const QString &filename);
     void createTodayConversationIfNotExists();
     void fillChatListWidget();
+    void showProgressDialog(const QString &text);
+    void hideProgressDialog();
+    void lockUi(bool lock);
 };
 #endif // MAINWINDOW_H
