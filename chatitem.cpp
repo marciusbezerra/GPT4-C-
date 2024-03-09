@@ -10,8 +10,9 @@ ChatItem::ChatItem(QWidget *parent)
 
 void ChatItem::setQuestionAnswer(const QString &question, const QString &answer)
 {
-    ui->textBrowserQuestion->setMarkdown(question);
-    ui->textBrowserAnswer->setMarkdown(answer);
+    // setMarkdown => question em negrigo, quebra de linha e resposta
+    QString questionAnswer = QString("**%1**\n\n%2").arg(question).arg(answer);
+    ui->textBrowserQuestion->setMarkdown(questionAnswer);
 }
 
 ChatItem::~ChatItem()

@@ -5,7 +5,7 @@
 #include <QNetworkReply>
 
 // Defina uma estrutura para representar um chat
-struct Chat {
+struct QuestionAnswer {
     QString question;
     QString answer;
     QString image;
@@ -16,7 +16,7 @@ struct Conversation {
     QString id;
     QString date;
     QString title;
-    QList<Chat> chats;
+    QList<std::shared_ptr<QuestionAnswer>> questionAnswerList;
 };
 
 QT_BEGIN_NAMESPACE
@@ -41,15 +41,15 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QString apiKey;
-    Chat lastChat;
-    QList<Conversation> conversations;
-    Conversation currentConversation;
+    std::shared_ptr<QuestionAnswer> lastQuestionAnswer;
+    QList<std::shared_ptr<Conversation>> conversations;
+    std::shared_ptr<Conversation> currentConversation;
     void addChatItem();
     void fillConversationTreeView();
     void loadConversations(const QString &filename);
     void saveConversations(const QString &filename);
     void createTodayConversationIfNotExists();
-    void addChat(QString question, QString answer);
+    void addQuestionAnswerWidget(QString question, QString answer);
     void fillChatListWidget();
 };
 #endif // MAINWINDOW_H

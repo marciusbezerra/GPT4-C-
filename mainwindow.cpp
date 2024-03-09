@@ -41,8 +41,9 @@ void MainWindow::fillConversationTreeView() {
 
     // Agrupe as conversas por data
     QMap<QString, QList<Conversation>> conversationsGroupedByDate;
+
     for (const auto &conversation : conversations) {
-        conversationsGroupedByDate[conversation.date].append(conversation);
+        conversationsGroupedByDate[conversation->date].append(*conversation);
     }
 
     // Preencha a árvore com as conversas agrupadas por data
@@ -67,9 +68,7 @@ void MainWindow::fillConversationTreeView() {
 void MainWindow::on_pushButtonSendQuestion_clicked()
 {
     apiKey = ui->lineEditApiKey->text();
-    lastChat.question = ui->textEditQuestion->toPlainText();
-    lastChat.answer = "";
-    lastChat.image = "";
+    auto question = ui->textEditQuestion->toPlainText();
 
     if(apiKey.isEmpty()) {
         QMessageBox::warning(this, "API Key não informada", "Informe a API Key para continuar");
@@ -77,14 +76,19 @@ void MainWindow::on_pushButtonSendQuestion_clicked()
         return;
     }
 
-    if(lastChat.question.isEmpty()) {
+    if(question.isEmpty()) {
         QMessageBox::warning(this, "Pergunta não informada", "Digite uma pergunta para continuar");
         statusBar()->showMessage("Digite uma pergunta", 3000);
         return;
     }
 
+    lastQuestionAnswer = std::make_shared<QuestionAnswer>();
+    lastQuestionAnswer->question = question;
+    lastQuestionAnswer->answer = "";
+    lastQuestionAnswer->image = "";
+
     createTodayConversationIfNotExists();
-    currentConversation.chats.append(lastChat);
+    currentConversation->questionAnswerList.append(lastQuestionAnswer);
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     connect(manager, &QNetworkAccessManager::finished, this, &MainWindow::on_networkRequestFinished);
@@ -97,16 +101,16 @@ void MainWindow::on_pushButtonSendQuestion_clicked()
     QJsonObject body;
     QJsonArray messagesArray;
 
-    for (const auto &chat : currentConversation.chats) {
+    for (const auto &questionAnswer : currentConversation->questionAnswerList) {
         QJsonObject chatObject;
         chatObject["role"] = "user";
-        chatObject["content"] = chat.question;
-        if (!chat.answer.isEmpty()) {
+        chatObject["content"] = questionAnswer->question;
+        if (!questionAnswer->answer.isEmpty()) {
             chatObject["role"] = "assistant";
-            chatObject["content"] = chat.answer;
+            chatObject["content"] = questionAnswer->answer;
         }
-        if (!chat.image.isEmpty()) {
-            chatObject["image"] = chat.image;
+        if (!questionAnswer->image.isEmpty()) {
+            chatObject["image"] = questionAnswer->image;
         }
         messagesArray.append(chatObject);
     }
@@ -144,18 +148,17 @@ void MainWindow::on_networkRequestFinished(QNetworkReply *reply)
     // doc.setMarkdown(answer);
     // QString html = doc.toHtml();
 
-    lastChat.answer = answer;
+    lastQuestionAnswer->answer = answer;
 
-    addChat(lastChat.question, lastChat.answer);
-    conversations.append(currentConversation);
+    addQuestionAnswerWidget(lastQuestionAnswer->question, lastQuestionAnswer->answer);
     saveConversations("conversations.json");
 }
 
-void MainWindow::addChat(QString question, QString answer) {
+void MainWindow::addQuestionAnswerWidget(QString question, QString answer) {
     ChatItem *item = new ChatItem(this);
     auto *witem = new QListWidgetItem();
     witem->setSizeHint(item->sizeHint());
-    // witem->setSizeHint(QSize(891, 90));
+    // witem->setSizeHint(QSize(891, 500));
     ui->listWidgetChat->addItem(witem);
     ui->listWidgetChat->setItemWidget(witem, item);
     item->setQuestionAnswer(question, answer);
@@ -163,22 +166,23 @@ void MainWindow::addChat(QString question, QString answer) {
 
 void MainWindow::createTodayConversationIfNotExists() {
 
-    if (currentConversation.id.isEmpty()) {
+    if (!currentConversation) {
 
         // se não existe nenhuma conversa, para a data de hoje...
         for (const auto &conversation : conversations) {
-            if (conversation.date == QDateTime::currentDateTime().toString("dd/MM/yyyy")) {
+            if (conversation->date == QDateTime::currentDateTime().toString("dd/MM/yyyy")) {
                 currentConversation = conversation;
                 break;
             }
         }
 
         // se não existe nenhuma conversa para a data de hoje, cria uma nova
-        if (currentConversation.id.isEmpty()) {
-            currentConversation.id = QUuid::createUuid().toString();
-            currentConversation.date = QDateTime::currentDateTime().toString("dd/MM/yyyy");
-            currentConversation.title = "Conversa #00001";
-            // currentConversation.chats = {};
+        if (!currentConversation) {
+            currentConversation = std::make_shared<Conversation>();
+            currentConversation->id = QUuid::createUuid().toString();
+            currentConversation->date = QDateTime::currentDateTime().toString("dd/MM/yyyy");
+            currentConversation->title = "Conversa #00001";
+            currentConversation->questionAnswerList = QList<std::shared_ptr<QuestionAnswer>>();
             conversations.append(currentConversation);
             fillConversationTreeView();
         }
@@ -198,22 +202,23 @@ void MainWindow::loadConversations(const QString &filename)
     QJsonDocument doc(QJsonDocument::fromJson(data));
     QJsonArray array = doc.array();
 
-    conversations.clear();
+    conversations = QList<std::shared_ptr<Conversation>>();
+
     for (int i = 0; i < array.size(); ++i) {
         QJsonObject conversationObject = array[i].toObject();
-        Conversation conversation;
-        conversation.id = conversationObject["id"].toString();
-        conversation.date = conversationObject["date"].toString();
-        conversation.title = conversationObject["title"].toString();
+        auto conversation = std::make_shared<Conversation>();
+        conversation->id = conversationObject["id"].toString();
+        conversation->date = conversationObject["date"].toString();
+        conversation->title = conversationObject["title"].toString();
 
-        QJsonArray chatsArray = conversationObject["chats"].toArray();
+        QJsonArray chatsArray = conversationObject["questionAnswerList"].toArray();
         for (int j = 0; j < chatsArray.size(); ++j) {
             QJsonObject chatObject = chatsArray[j].toObject();
-            Chat chat;
-            chat.question = chatObject["question"].toString();
-            chat.answer = chatObject["answer"].toString();
-            chat.image = chatObject["image"].toString();
-            conversation.chats.append(chat);
+            auto questionAnswer = std::make_shared<QuestionAnswer>();
+            questionAnswer->question = chatObject["question"].toString();
+            questionAnswer->answer = chatObject["answer"].toString();
+            questionAnswer->image = chatObject["image"].toString();
+            conversation->questionAnswerList.append(questionAnswer);
         }
 
         conversations.append(conversation);
@@ -231,20 +236,20 @@ void MainWindow::saveConversations(const QString &filename)
     QJsonArray data;
     for (const auto &conversation : conversations) {
         QJsonObject conversationObject;
-        conversationObject["id"] = conversation.id;
-        conversationObject["date"] = conversation.date;
-        conversationObject["title"] = conversation.title;
+        conversationObject["id"] = conversation->id;
+        conversationObject["date"] = conversation->date;
+        conversationObject["title"] = conversation->title;
 
         QJsonArray chatsArray;
-        for (const auto &chat : conversation.chats) {
+        for (const auto &questionAnswer : conversation->questionAnswerList) {
             QJsonObject chatObject;
-            chatObject["question"] = chat.question;
-            chatObject["answer"] = chat.answer;
-            chatObject["image"] = chat.image;
+            chatObject["question"] = questionAnswer->question;
+            chatObject["answer"] = questionAnswer->answer;
+            chatObject["image"] = questionAnswer->image;
             chatsArray.append(chatObject);
         }
 
-        conversationObject["chats"] = chatsArray;
+        conversationObject["questionAnswerList"] = chatsArray;
         data.append(conversationObject);
     }
 
@@ -255,9 +260,9 @@ void MainWindow::saveConversations(const QString &filename)
 void MainWindow::on_treeViewChats_clicked(const QModelIndex &index)
 {
     if (index.parent().isValid()) {
-        QString conversationId = index.data().toString();
+        QString conversationId = index.data(Qt::UserRole).toString();
         for (const auto &conversation : conversations) {
-            if (conversation.id == conversationId) {
+            if (conversation->id == conversationId) {
                 currentConversation = conversation;
                 break;
             }
@@ -269,7 +274,9 @@ void MainWindow::on_treeViewChats_clicked(const QModelIndex &index)
 void MainWindow::fillChatListWidget()
 {
     ui->listWidgetChat->clear();
-    for (const auto &chat : currentConversation.chats) {
-        addChat(chat.question, chat.answer);
+    if (currentConversation) {
+        for (const auto &questionAnswer : currentConversation->questionAnswerList) {
+            addQuestionAnswerWidget(questionAnswer->question, questionAnswer->answer);
+        }
     }
 }
