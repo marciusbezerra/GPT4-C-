@@ -17,8 +17,11 @@
 #include <QDesktopServices>
 #include <QSettings>
 #include <QCloseEvent>
+#include <QFileDialog>
+#include <QBuffer>
 
 // for Windows deployment
+// abrir o prompt do Qt msvc2019_64
 // cd ../release
 // windeployqt .
 
@@ -27,6 +30,11 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    // Atualizar a versão também em RC_PRODUCTVERSION (arquivo .pro)
+    QCoreApplication::setApplicationVersion("1.0.1");
+    setWindowTitle("GPT4 - Turbo (MCBMax.com) v" + QCoreApplication::applicationVersion());
+
+    this->setWindowTitle("GPT-3 Chat");
     loadConversations("conversations.json");
     fillConversationTreeView();
 
@@ -63,7 +71,28 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 
 void MainWindow::on_labelImage_clicked()
 {
-    QMessageBox::warning(this, "Ainda não implementado", "Esta funcionalidade ainda não foi implementada");
+    qDebug() << "on_labelImage_clicked";
+    QMenu contextMenu(this);
+    QAction actionClear("Apagar", this);
+    QAction actionLoad("Carregar", this);
+    connect(&actionClear, &QAction::triggered, this, [this]() {
+        resetImage();
+    });
+    connect(&actionLoad, &QAction::triggered, this, [this]() {
+        QString fileName = QFileDialog::getOpenFileName(this, "Carregar Imagem", "", "Imagens (*.png *.jpg *.jpeg)");
+        if (!fileName.isEmpty()) {
+            ui->labelImage->clear();
+            QPixmap pixmap(fileName);
+            if (pixmap.width() > 512 || pixmap.height() > 512) {
+                pixmap = pixmap.scaled(512, 512, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            }
+            ui->labelImage->setPixmap(pixmap);
+            ui->labelImage->setScaledContents(true);
+        }
+    });
+    contextMenu.addAction(&actionClear);
+    contextMenu.addAction(&actionLoad);
+    contextMenu.exec(ui->labelImage->mapToGlobal(QPoint(15, 15)));
 }
 
 void MainWindow::fillConversationTreeView() {
@@ -134,10 +163,22 @@ void MainWindow::on_toolButtonSendQuestion_clicked()
     lockUi(true);
     showProgressDialog("Aguarde, consultado a API OpenAI...");
 
+    auto QPixmapToBase64 = [](const QPixmap &pixmap) {
+        QByteArray byteArray;
+        QBuffer buffer(&byteArray);
+        buffer.open(QIODevice::WriteOnly);
+        pixmap.save(&buffer, "PNG");
+        return byteArray.toBase64();
+    };
+
     lastQuestionAnswer = std::make_shared<QuestionAnswer>();
     lastQuestionAnswer->question = question;
     lastQuestionAnswer->answer = "";
-    lastQuestionAnswer->image = "";
+    if (!ui->labelImage->pixmap().isNull()) {
+        lastQuestionAnswer->image = "data:image/png;base64," + QPixmapToBase64(ui->labelImage->pixmap());
+    } else {
+        lastQuestionAnswer->image = "";
+    }
 
     createTodayConversationIfNotExists();
     currentConversation->questionAnswerList.append(lastQuestionAnswer);
@@ -152,36 +193,60 @@ void MainWindow::on_toolButtonSendQuestion_clicked()
     QJsonObject body;
     QJsonArray messagesArray;
 
-    for (const auto &questionAnswer : currentConversation->questionAnswerList) {
+    if (lastQuestionAnswer->image.isEmpty()) {
+        for (const auto &questionAnswer : currentConversation->questionAnswerList) {
+            QJsonObject chatObject;
+            chatObject["role"] = "user";
+            chatObject["content"] = questionAnswer->question;
+            if (!questionAnswer->answer.isEmpty()) {
+                chatObject["role"] = "assistant";
+                chatObject["content"] = questionAnswer->answer;
+            }
+            messagesArray.append(chatObject);
+        }
+    } else {
         QJsonObject chatObject;
         chatObject["role"] = "user";
-        chatObject["content"] = questionAnswer->question;
-        if (!questionAnswer->answer.isEmpty()) {
-            chatObject["role"] = "assistant";
-            chatObject["content"] = questionAnswer->answer;
-        }
-        if (!questionAnswer->image.isEmpty()) {
-            chatObject["image"] = questionAnswer->image;
-        }
+        chatObject["content"] = QJsonArray({
+            QJsonObject({
+                {"type", "text"},
+                {"text", lastQuestionAnswer->question }
+            }),
+            QJsonObject({
+                {"type", "image_url"},
+                {"image_url", QJsonObject({
+                                  {"url", lastQuestionAnswer->image},
+                                  // {"detail", "high"}
+                              })}
+            })
+        });
         messagesArray.append(chatObject);
     }
 
     body["messages"] = messagesArray;
-    body["model"] = "gpt-4-turbo-preview";
+    body["model"] = lastQuestionAnswer->image.isEmpty() ? "gpt-4-turbo-preview" : "gpt-4-vision-preview";
     // body["model"] = "gpt-3.5-turbo";
     body["temperature"] = 0.5;
     body["max_tokens"] = 4000;
 
-    manager->post(request, QJsonDocument(body).toJson());
+    QByteArray bodyJson = QJsonDocument(body).toJson();
+
+    // gravar bodyJson em um arquivo...
+    QFile file("debug.json");
+    file.open(QIODevice::WriteOnly);
+    file.write(bodyJson);
+    file.close();
+
+    manager->post(request, bodyJson);
 }
 
 void MainWindow::on_networkRequestFinished(QNetworkReply *reply)
 {
-
     if(reply->error() != QNetworkReply::NoError) {
         hideProgressDialog();
         lockUi(false);
         auto error = reply->readAll();
+        qDebug() << error;
         if (error.startsWith("{")) {
             QJsonDocument docJson = QJsonDocument::fromJson(error);
             QJsonObject obj = docJson.object();
@@ -205,6 +270,12 @@ void MainWindow::on_networkRequestFinished(QNetworkReply *reply)
     hideProgressDialog();
     lockUi(false);
     ui->textEditQuestion->clear();
+    resetImage();
+}
+
+void MainWindow::resetImage() {
+    ui->labelImage->clear();
+    ui->labelImage->setText("Clique para carregar uma imagem");
 }
 
 void MainWindow::showProgressDialog(const QString &text)
@@ -240,7 +311,7 @@ void MainWindow::createTodayConversationIfNotExists() {
     if (!currentConversation) {
 
         std::shared_ptr<HistoryDate> historyDateForToday = nullptr;
-        QString today = QDateTime::currentDateTime().toString("dd/MM/yyyy HHmm");
+        QString today = QDateTime::currentDateTime().toString("dd/MM/yyyy");
 
         // se não existe nenhuma conversa, para a data de hoje...
         for (const auto &historyDate : historyDateList) {
@@ -378,7 +449,11 @@ void MainWindow::fillChatListWidget(std::shared_ptr<Conversation> conversation)
         currentConversation = conversation;
         QString document = QString("## %1\n\n---\n\n").arg(conversation->title);
         ui->textBrowser->append(document);
+
         for (const auto &questionAnswer : conversation->questionAnswerList) {
+            if (!questionAnswer->image.isEmpty()) {
+                document += QString("![image](%1)\n\n").arg(questionAnswer->image);
+            }
             document += QString("❓ **Você:** *%1*\n\n").arg(questionAnswer->question);
             document += QString("💡 **GPT:** %1\n\n---\n\n").arg(questionAnswer->answer);
         }
@@ -402,28 +477,31 @@ void MainWindow::on_treeViewChats_doubleClicked(const QModelIndex &index)
 
 void MainWindow::on_treeViewChats_customContextMenuRequested(const QPoint &pos)
 {
-    qDebug() << "on_treeViewChats_customContextMenuRequested";
-    QMenu contextMenu(this);
-    QAction action("Apagar", this);
-    connect(&action, &QAction::triggered, this, &MainWindow::deleteChat);
-    contextMenu.addAction(&action);
-    contextMenu.exec(ui->treeViewChats->mapToGlobal(pos));
+    if (currentConversation) {
+        QMenu contextMenu(this);
+        QAction action("Apagar", this);
+        connect(&action, &QAction::triggered, this, &MainWindow::deleteChat);
+        contextMenu.addAction(&action);
+        contextMenu.exec(ui->treeViewChats->mapToGlobal(pos));
+    }
 }
 
 void MainWindow::deleteChat()
 {
     if (currentConversation) {
-        for (const auto &historyDate : historyDateList) {
-            for (int i = 0; i < historyDate->conversationList.size(); ++i) {
-                if (historyDate->conversationList[i]->id == currentConversation->id) {
-                    historyDate->conversationList.removeAt(i);
-                    break;
+        if (QMessageBox::question(this, "Apagar conversa", "Tem certeza que deseja apagar esta conversa?", QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+            for (const auto &historyDate : historyDateList) {
+                for (int i = 0; i < historyDate->conversationList.size(); ++i) {
+                    if (historyDate->conversationList[i]->id == currentConversation->id) {
+                        historyDate->conversationList.removeAt(i);
+                        break;
+                    }
                 }
             }
+            fillConversationTreeView();
+            fillChatListWidget(nullptr);
+            saveConversations("conversations.json");
         }
-        fillConversationTreeView();
-        fillChatListWidget(nullptr);
-        saveConversations("conversations.json");
     }
 }
 

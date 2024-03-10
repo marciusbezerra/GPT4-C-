@@ -191,6 +191,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <height>16777215</height>
                   </size>
                  </property>
+                 <property name="contextMenuPolicy">
+                  <enum>Qt::ActionsContextMenu</enum>
+                 </property>
                  <property name="toolTip">
                   <string extracomment="Clique para enviar uma imagem"/>
                  </property>
@@ -204,11 +207,14 @@ border-radius: 10px;</string>
                  <property name="frameShadow">
                   <enum>QFrame::Plain</enum>
                  </property>
-                 <property name="pixmap">
-                  <pixmap resource="Resources.qrc">:/new/images/resources/images/placeholder-300x200.png</pixmap>
+                 <property name="text">
+                  <string>Clique para carregar uma imagem</string>
                  </property>
                  <property name="alignment">
-                  <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>

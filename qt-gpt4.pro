@@ -3,6 +3,8 @@ QT       += core gui network
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 RC_ICONS = appicon.ico
+RC_FILEVERSION = 1,0,1,0
+RC_FILEDESCRIPTION = "Aplicativo para GPT-4 criado por Marcius Bezerra (marciusbezerra@gmail.com)"
 
 CONFIG += c++17
 

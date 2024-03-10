@@ -73,5 +73,6 @@ private:
     void closeEvent(QCloseEvent *event);
     void deleteChat();
     bool eventFilter(QObject *watched, QEvent *event);
+    void resetImage();
 };
 #endif // MAINWINDOW_H
