@@ -19,8 +19,15 @@
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QBuffer>
+#include "version.h"
+
+// Informações de versão foram postas em version.h e resources.rc
+// (poderiam estar apenas no .pro também, RC_ICONS e VERSION)
 
 // for Windows deployment
+// mudar para a compilação para release
+// compilar o projeto
+// limpar o diretório release deixando apenas o exe
 // abrir o prompt do Qt msvc2019_64
 // cd ../release
 // windeployqt .
@@ -30,8 +37,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    // Atualizar a versão também em RC_PRODUCTVERSION (arquivo .pro)
-    QCoreApplication::setApplicationVersion("1.0.1");
+    // Atualizar a versão também em VERSION (arquivo .pro)
+    QCoreApplication::setApplicationVersion(VER_PRODUCTVERSION_STR);
     setWindowTitle("GPT4 - Turbo (MCBMax.com) v" + QCoreApplication::applicationVersion());
 
     this->setWindowTitle("GPT-3 Chat");
