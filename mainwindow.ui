@@ -43,7 +43,7 @@
              <item>
               <widget class="QLineEdit" name="lineEditApiKey">
                <property name="text">
-                <string>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</string>
+                <string/>
                </property>
                <property name="maxLength">
                 <number>200</number>
