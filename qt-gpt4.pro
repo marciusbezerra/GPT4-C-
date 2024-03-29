@@ -7,6 +7,9 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 # VERSION = 1.0.1
 # DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
+# for macos
+ICON = appicon.icns
+
 RC_FILE = resources.rc
 
 CONFIG += c++17
