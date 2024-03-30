@@ -41,7 +41,6 @@ MainWindow::MainWindow(QWidget *parent)
     QCoreApplication::setApplicationVersion(VER_PRODUCTVERSION_STR);
     setWindowTitle("GPT4 - Turbo (MCBMax.com) v" + QCoreApplication::applicationVersion());
 
-    this->setWindowTitle("GPT-3 Chat");
     loadConversations("conversations.json");
     fillConversationTreeView();
 
@@ -349,7 +348,9 @@ void MainWindow::createTodayConversationIfNotExists() {
 
 void MainWindow::loadConversations(const QString &filename)
 {
-    QFile file(filename);
+    QString absolutePath = QCoreApplication::applicationDirPath() + "/" + filename;
+    QFile file(absolutePath);
+    
     if (!file.open(QIODevice::ReadOnly)) {
         qWarning("Não foi possível abrir o arquivo para leitura.");
         return;
@@ -391,8 +392,10 @@ void MainWindow::loadConversations(const QString &filename)
 }
 
 void MainWindow::saveConversations(const QString &filename)
-{
-    QFile file(filename);
+{   
+    QString absolutePath = QCoreApplication::applicationDirPath() + "/" + filename;
+    QFile file(absolutePath);
+
     if (!file.open(QIODevice::WriteOnly)) {
         qWarning("Não foi possível abrir o arquivo para escrita.");
         return;
