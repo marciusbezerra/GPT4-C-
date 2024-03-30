@@ -38,11 +38,11 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    ~MainWindow() override;
 
 private slots:
     void on_networkRequestFinished(QNetworkReply *reply);
-    void on_treeViewChats_clicked(const QModelIndex &index);
+    void onTreeViewChatsClicked(const QModelIndex &index);
     void on_actionSair_triggered();
     void on_commandLinkButtonNewChat_clicked();
     void on_actionCreditos_triggered();
@@ -70,9 +70,9 @@ private:
     void lockUi(bool lock);
     void fillChatListWidget(std::shared_ptr<Conversation> conversation);
     std::shared_ptr<Conversation> locateConversation(QStandardItem *item);
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event) override;
     void deleteChat();
-    bool eventFilter(QObject *watched, QEvent *event);
+    bool eventFilter(QObject *watched, QEvent *event) override;
     void resetImage();
 };
 #endif // MAINWINDOW_H

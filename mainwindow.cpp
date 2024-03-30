@@ -55,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->labelImage->installEventFilter(this);
     ui->labelImage->setCursor(Qt::PointingHandCursor);
 
-    connect(ui->treeViewChats, &QTreeView::clicked, this, &MainWindow::on_treeViewChats_clicked);
+    connect(ui->treeViewChats, &QTreeView::clicked, this, &MainWindow::onTreeViewChatsClicked);
 }
 
 MainWindow::~MainWindow()
@@ -428,7 +428,7 @@ void MainWindow::saveConversations(const QString &filename)
     file.write(doc.toJson());
 }
 
-void MainWindow::on_treeViewChats_clicked(const QModelIndex &index)
+void MainWindow::onTreeViewChatsClicked(const QModelIndex &index)
 {
     if (index.parent().isValid()) {
         QString conversationId = index.data(Qt::UserRole).toString();
@@ -533,7 +533,6 @@ void MainWindow::onItemChanged(const QModelIndex &topLeft, const QModelIndex &bo
         auto item = dynamic_cast<QStandardItemModel*>(ui->treeViewChats->model())->itemFromIndex(topLeft);
 
         if (item) {
-            auto conversationId = item->data(Qt::UserRole).toString();
             auto conversation = locateConversation(item);
 
             if (conversation) {
