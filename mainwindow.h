@@ -56,10 +56,12 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QString apiKey;
+    QString model;
     std::shared_ptr<QuestionAnswer> lastQuestionAnswer;
     QList<std::shared_ptr<HistoryDate>> historyDateList;
     std::shared_ptr<Conversation> currentConversation;
     QProgressDialog *progressDialog = nullptr;
+    void fillModelList();
     void addChatItem();
     void fillConversationTreeView();
     void loadConversations(const QString &filename);

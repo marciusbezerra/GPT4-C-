@@ -41,12 +41,22 @@ MainWindow::MainWindow(QWidget *parent)
     QCoreApplication::setApplicationVersion(VER_PRODUCTVERSION_STR);
     setWindowTitle("GPT4 - Turbo (MCBMax.com) v" + QCoreApplication::applicationVersion());
 
+    fillModelList();
+
     loadConversations("conversations.json");
     fillConversationTreeView();
 
     QSettings settings("OpenAI", "GPT");
+
     apiKey = settings.value("api_key").toString();
+
+    model = settings.value("model").toString();
+    if (model.isEmpty()) {
+        model = "gpt-4o";
+    }
+
     ui->lineEditApiKey->setText(apiKey);
+    ui->comboBoxModel->setCurrentText(model);
 
     connect(ui->treeViewChats->model(), &QAbstractItemModel::dataChanged, this, &MainWindow::onItemChanged);
     ui->treeViewChats->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -99,6 +109,20 @@ void MainWindow::on_labelImage_clicked()
     contextMenu.addAction(&actionClear);
     contextMenu.addAction(&actionLoad);
     contextMenu.exec(ui->labelImage->mapToGlobal(QPoint(15, 15)));
+}
+
+void MainWindow::fillModelList()
+{
+    ui->comboBoxModel->clear();
+    ui->comboBoxModel->addItem("gpt-4o", "Com Vision, mais avançado, rápido, multilíngue e barato - 128.000 tokens até 2023");
+    ui->comboBoxModel->addItem("gpt-4o-mini", "Com Vision, melhor e mais barato que o GPT-3.5 Turbo, rápido, multilíngue e barato - 128.000 tokens até 2023");
+    ui->comboBoxModel->addItem("gpt-4-turbo", "GPT-4 Turbo com Vision - 128.000 tokens até 2023");
+    ui->comboBoxModel->addItem("gpt-4-0125-preview", "Retorna o máximo de 4.096 tokens de saída - 128,000 tokens até 2023");
+    ui->comboBoxModel->addItem("gpt-4-1106-preview", "Retorna o máximo de 4.096 tokens de saída - 128,000 tokens até 2023");
+    ui->comboBoxModel->addItem("gpt-3.5-turbo-0125", "16.385 tokens até 2021");
+    ui->comboBoxModel->addItem("gpt-3.5-turbo", "16.385 tokens até 2021");
+    ui->comboBoxModel->addItem("gpt-3.5-turbo-1106", "16.385 tokens até 2021");
+    ui->comboBoxModel->addItem("gpt-3.5-turbo-instruct", "4.096 tokens até 2021");
 }
 
 void MainWindow::fillConversationTreeView() {
@@ -230,7 +254,8 @@ void MainWindow::on_toolButtonSendQuestion_clicked()
     }
 
     body["messages"] = messagesArray;
-    body["model"] = lastQuestionAnswer->image.isEmpty() ? "gpt-4-turbo-preview" : "gpt-4-vision-preview";
+    body["model"] = ui->comboBoxModel->currentText();
+    // body["model"] = lastQuestionAnswer->image.isEmpty() ? "gpt-4-turbo-preview" : "gpt-4-vision-preview";
     // body["model"] = "gpt-3.5-turbo";
     body["temperature"] = 0.5;
     body["max_tokens"] = 4000;
@@ -588,6 +613,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         saveConversations("conversations.json");
         QSettings settings("OpenAI", "GPT");
         settings.setValue("api_key", ui->lineEditApiKey->text());
+        settings.setValue("model", ui->comboBoxModel->currentText());
 
         event->accept();
     } else {
