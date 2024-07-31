@@ -1,11 +1,11 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define VER_FILEVERSION             1,0,2,0
-#define VER_FILEVERSION_STR         "1.0.2.0\0"
+#define VER_FILEVERSION             1,0,3,0
+#define VER_FILEVERSION_STR         "1.0.3.0\0"
 
-#define VER_PRODUCTVERSION          1,0,2,0
-#define VER_PRODUCTVERSION_STR      "1.0.2\0"
+#define VER_PRODUCTVERSION          1,0,3,0
+#define VER_PRODUCTVERSION_STR      "1.0.3\0"
 
 #define VER_COMPANYNAME_STR         "MCBMax"
 #define VER_FILEDESCRIPTION_STR     "Aplicativo para GPT-4 criado por Marcius Bezerra (marciusbezerra@gmail.com)"
