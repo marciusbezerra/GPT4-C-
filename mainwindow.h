@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "qcombobox.h"
 #include <QMainWindow>
 #include <QNetworkReply>
 #include <QProgressDialog>
@@ -56,7 +57,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QString apiKey;
-    QString model;
+    QString gptModel;
     std::shared_ptr<QuestionAnswer> lastQuestionAnswer;
     QList<std::shared_ptr<HistoryDate>> historyDateList;
     std::shared_ptr<Conversation> currentConversation;
@@ -76,5 +77,6 @@ private:
     void deleteChat();
     bool eventFilter(QObject *watched, QEvent *event) override;
     void resetImage();
+    void setComboBoxToId(QComboBox *comboBox, QString id);
 };
 #endif // MAINWINDOW_H

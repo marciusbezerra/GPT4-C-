@@ -24,6 +24,7 @@ SOURCES += \
 
 HEADERS += \
     mainwindow.h \
+    styleditemdelegate.h \
     version.h
 
 FORMS += \

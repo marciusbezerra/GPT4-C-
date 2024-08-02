@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "styleditemdelegate.h"
 #include "ui_mainwindow.h"
 
 #include <QStandardItemModel>
@@ -50,13 +51,15 @@ MainWindow::MainWindow(QWidget *parent)
 
     apiKey = settings.value("api_key").toString();
 
-    model = settings.value("model").toString();
-    if (model.isEmpty()) {
-        model = "gpt-4o";
+    ui->comboBoxModel->setItemDelegate(new StyledItemDelegate(ui->comboBoxModel));
+
+    gptModel = settings.value("model").toString();
+    if (gptModel.isEmpty()) {
+        gptModel = "gpt-4o";
     }
 
     ui->lineEditApiKey->setText(apiKey);
-    ui->comboBoxModel->setCurrentText(model);
+    setComboBoxToId(ui->comboBoxModel, gptModel);
 
     connect(ui->treeViewChats->model(), &QAbstractItemModel::dataChanged, this, &MainWindow::onItemChanged);
     ui->treeViewChats->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -70,6 +73,16 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::setComboBoxToId(QComboBox *comboBox, QString id) {
+    for (int i = 0; i < comboBox->count(); ++i) {
+        if (comboBox->itemData(i).toString() == id) {
+            comboBox->setCurrentIndex(i);
+            return;
+        }
+    }
+    qDebug() << "ID not found in comboBox";
 }
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
@@ -114,15 +127,16 @@ void MainWindow::on_labelImage_clicked()
 void MainWindow::fillModelList()
 {
     ui->comboBoxModel->clear();
-    ui->comboBoxModel->addItem("gpt-4o", "Com Vision, mais avançado, rápido, multilíngue e barato - 128.000 tokens até 2023");
-    ui->comboBoxModel->addItem("gpt-4o-mini", "Com Vision, melhor e mais barato que o GPT-3.5 Turbo, rápido, multilíngue e barato - 128.000 tokens até 2023");
-    ui->comboBoxModel->addItem("gpt-4-turbo", "GPT-4 Turbo com Vision - 128.000 tokens até 2023");
-    ui->comboBoxModel->addItem("gpt-4-0125-preview", "Retorna o máximo de 4.096 tokens de saída - 128,000 tokens até 2023");
-    ui->comboBoxModel->addItem("gpt-4-1106-preview", "Retorna o máximo de 4.096 tokens de saída - 128,000 tokens até 2023");
-    ui->comboBoxModel->addItem("gpt-3.5-turbo-0125", "16.385 tokens até 2021");
-    ui->comboBoxModel->addItem("gpt-3.5-turbo", "16.385 tokens até 2021");
-    ui->comboBoxModel->addItem("gpt-3.5-turbo-1106", "16.385 tokens até 2021");
-    ui->comboBoxModel->addItem("gpt-3.5-turbo-instruct", "4.096 tokens até 2021");
+
+    ui->comboBoxModel->addItem("<b>gpt-4o</b><br><i>Com Vision, mais avançado, rápido, multilíngue e barato - 128.000 tokens até 2023</i>", QVariant("gpt-4o"));
+    ui->comboBoxModel->addItem("<b>gpt-4o-mini</b><br><i>Com Vision, melhor e mais barato que o GPT-3.5 Turbo, rápido, multilíngue e barato - 128.000 tokens até 2023</i>", QVariant("gpt-4o-mini"));
+    ui->comboBoxModel->addItem("<b>gpt-4-turbo</b><br><i>GPT-4 Turbo com Vision - 128.000 tokens até 2023</i>", QVariant("gpt-4-turbo"));
+    ui->comboBoxModel->addItem("<b>gpt-4-0125-preview</b><br><i>Retorna o máximo de 4.096 tokens de saída - 128,000 tokens até 2023</i>", QVariant("gpt-4-0125-preview"));
+    ui->comboBoxModel->addItem("<b>gpt-4-1106-preview</b><br><i>Retorna o máximo de 4.096 tokens de saída - 128,000 tokens até 2023</i>", QVariant("gpt-4-1106-preview"));
+    ui->comboBoxModel->addItem("<b>gpt-3.5-turbo-0125</b><br><i>16.385 tokens até 2021</i>", QVariant("gpt-3.5-turbo-0125"));
+    ui->comboBoxModel->addItem("<b>gpt-3.5-turbo</b><br><i>16.385 tokens até 2021</i>", QVariant("gpt-3.5-turbo"));
+    ui->comboBoxModel->addItem("<b>gpt-3.5-turbo-1106</b><br><i>16.385 tokens até 2021</i>", QVariant("gpt-3.5-turbo-1106"));
+    ui->comboBoxModel->addItem("<b>gpt-3.5-turbo-instruct</b><br><i>4.096 tokens até 2021</i>", QVariant("gpt-3.5-turbo-instruct"));
 }
 
 void MainWindow::fillConversationTreeView() {
@@ -254,7 +268,7 @@ void MainWindow::on_toolButtonSendQuestion_clicked()
     }
 
     body["messages"] = messagesArray;
-    body["model"] = ui->comboBoxModel->currentText();
+    body["model"] = ui->comboBoxModel->currentData().toString();
     // body["model"] = lastQuestionAnswer->image.isEmpty() ? "gpt-4-turbo-preview" : "gpt-4-vision-preview";
     // body["model"] = "gpt-3.5-turbo";
     body["temperature"] = 0.5;
@@ -613,7 +627,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         saveConversations("conversations.json");
         QSettings settings("OpenAI", "GPT");
         settings.setValue("api_key", ui->lineEditApiKey->text());
-        settings.setValue("model", ui->comboBoxModel->currentText());
+        settings.setValue("model", ui->comboBoxModel->currentData().toString());
 
         event->accept();
     } else {
