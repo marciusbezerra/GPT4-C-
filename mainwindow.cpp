@@ -33,6 +33,15 @@
 // cd ../release
 // windeployqt .
 
+// for mac deployment
+// mudar para a compilação para release
+// compilar o projeto
+// abrir o terminal
+// 6.6.2/macos/bin/macdeployqt /Users/marciusbezerra/Projetos/c++/build-qt-gpt4-Qt_6_6_2_for_macOS-Release/qt-gpt4.app -dmg
+// open /Users/marciusbezerra/Projetos/c++/build-qt-gpt4-Qt_6_6_2_for_macOS-Release/
+// executar o dmg
+// copiar para a pasta de aplicativos
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -133,7 +142,6 @@ void MainWindow::fillModelList()
     ui->comboBoxModel->addItem("<b>gpt-4-turbo</b><br><i>GPT-4 Turbo com Vision - 128.000 tokens até 2023</i>", QVariant("gpt-4-turbo"));
     ui->comboBoxModel->addItem("<b>gpt-3.5-turbo-0125</b><br><i>16.385 tokens até 2021</i>", QVariant("gpt-3.5-turbo-0125"));
     ui->comboBoxModel->addItem("<b>gpt-3.5-turbo</b><br><i>16.385 tokens até 2021</i>", QVariant("gpt-3.5-turbo"));
-    ui->comboBoxModel->addItem("<b>gpt-3.5-turbo-1106</b><br><i>16.385 tokens até 2021</i>", QVariant("gpt-3.5-turbo-1106"));
     ui->comboBoxModel->addItem("<b>gpt-3.5-turbo-instruct</b><br><i>4.096 tokens até 2021</i>", QVariant("gpt-3.5-turbo-instruct"));
 }
 
