@@ -131,8 +131,6 @@ void MainWindow::fillModelList()
     ui->comboBoxModel->addItem("<b>gpt-4o</b><br><i>Com Vision, mais avançado, rápido, multilíngue e barato - 128.000 tokens até 2023</i>", QVariant("gpt-4o"));
     ui->comboBoxModel->addItem("<b>gpt-4o-mini</b><br><i>Com Vision, melhor e mais barato que o GPT-3.5 Turbo, rápido, multilíngue e barato - 128.000 tokens até 2023</i>", QVariant("gpt-4o-mini"));
     ui->comboBoxModel->addItem("<b>gpt-4-turbo</b><br><i>GPT-4 Turbo com Vision - 128.000 tokens até 2023</i>", QVariant("gpt-4-turbo"));
-    ui->comboBoxModel->addItem("<b>gpt-4-0125-preview</b><br><i>Retorna o máximo de 4.096 tokens de saída - 128,000 tokens até 2023</i>", QVariant("gpt-4-0125-preview"));
-    ui->comboBoxModel->addItem("<b>gpt-4-1106-preview</b><br><i>Retorna o máximo de 4.096 tokens de saída - 128,000 tokens até 2023</i>", QVariant("gpt-4-1106-preview"));
     ui->comboBoxModel->addItem("<b>gpt-3.5-turbo-0125</b><br><i>16.385 tokens até 2021</i>", QVariant("gpt-3.5-turbo-0125"));
     ui->comboBoxModel->addItem("<b>gpt-3.5-turbo</b><br><i>16.385 tokens até 2021</i>", QVariant("gpt-3.5-turbo"));
     ui->comboBoxModel->addItem("<b>gpt-3.5-turbo-1106</b><br><i>16.385 tokens até 2021</i>", QVariant("gpt-3.5-turbo-1106"));
@@ -269,8 +267,6 @@ void MainWindow::on_toolButtonSendQuestion_clicked()
 
     body["messages"] = messagesArray;
     body["model"] = ui->comboBoxModel->currentData().toString();
-    // body["model"] = lastQuestionAnswer->image.isEmpty() ? "gpt-4-turbo-preview" : "gpt-4-vision-preview";
-    // body["model"] = "gpt-3.5-turbo";
     body["temperature"] = 0.5;
     body["max_tokens"] = 4000;
 
